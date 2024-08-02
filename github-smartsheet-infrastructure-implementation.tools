@@ -1,0 +1,635 @@
+
+# GITHUB & SMARTSHEET
+
+## Operational Efficiency in INFRASTRUCTURE Implementations
+
+GitHub and Smartsheet integration for technological advancements in project implementations and future-proofing site documentation through simple scripts.
+
+Integrating the Smartsheet GitHook with customized Python code can significantly enhance the management and documentation of infrastructure deployments. Here are several ideas for how you could customize and utilize this setup for your specific needs, such as termination matrices for cable termination and IDF patch panel identification, and documentation for standardized products:
+
+### IMPACT ANALYSIS in ServiceNow
+
+#### 1. Automated Termination Matrix Updates
+
+**Idea:**
+
+Automate Updates to Termination Matrices: Customize the GitHook to automatically update termination matrices in Smartsheet whenever there are changes in the GitHub repository. This ensures that all termination points and cable identifications are consistently documented and synchronized.
+
+**Implementation:**
+
+Python Script Customization: Modify the Python code to monitor specific files or directories within the GitHub repository that contain termination matrix data. When changes are detected, the script pushes updates to the corresponding Smartsheet.
+
+#### 2. IDF Patch Panel Identification and Documentation
+
+**Idea:**
+
+Real-Time IDF Patch Panel Documentation: Automatically document changes to IDF patch panels, including port assignments and cable routes. This ensures that any modifications are immediately reflected in both GitHub and Smartsheet.
+
+**Implementation:**
+
+Webhook Integration: Use the GitHook to listen for changes to patch panel documentation files in GitHub. On detecting a change, the Python script updates the corresponding Smartsheet, maintaining real-time synchronization.
+
+#### 3. Standardized Product Documentation
+
+**Idea:**
+
+Automated Data Sheet Updates: Manage standardized product data sheets (e.g., CPI Chatsworth racks, APC PDUs) by syncing changes between GitHub and Smartsheet. Ensure all documentation is up-to-date and easily accessible.
+
+**Implementation:**
+
+Product Data Management: Customize the Python script to identify and sync product data sheets. Whenever a data sheet is updated in GitHub, the script pushes the update to Smartsheet, ensuring all project teams have access to the latest specifications.
+
+#### 4. Inventory and Asset Management
+
+**Idea:**
+
+Track Inventory and Assets: Integrate inventory management for telecommunications infrastructure components. Sync inventory records between GitHub and Smartsheet to maintain accurate tracking of all assets.
+
+**Implementation:**
+
+Inventory Sync: Customize the script to handle inventory data files in GitHub. Any changes in inventory, such as adding new equipment or updating existing assets, are reflected in Smartsheet.
+
+#### 5. Project Management and Task Tracking
+
+**Idea:**
+
+Automate Project Tasks and Timelines: Utilize Smartsheet’s project management features to track project timelines, tasks, and milestones. Sync these with GitHub to keep project documentation and timelines in sync.
+
+**Implementation:**
+
+Task Automation: Modify the Python script to monitor project management files in GitHub. Updates or new tasks in GitHub are automatically pushed to Smartsheet, ensuring project managers have a real-time view of project progress.
+
+#### 6. Compliance and Auditing
+
+**Idea:**
+
+Maintain Compliance Documentation: Ensure all compliance-related documentation is consistently updated and synchronized between GitHub and Smartsheet. This is critical for regulatory compliance and auditing purposes.
+
+**Implementation:**
+
+Compliance Sync: Customize the script to track compliance documentation files. Any updates in GitHub are automatically synced with Smartsheet, maintaining an accurate and up-to-date compliance record.
+
+#### 7. Change Management and Version Control
+
+**Idea:**
+
+Track Changes and Versions: Implement a robust change management process by tracking document versions and changes in both GitHub and Smartsheet. Ensure all changes are logged and can be audited.
+
+**Implementation:**
+
+Version Tracking: Enhance the Python script to log changes and maintain version histories in Smartsheet. Sync these with GitHub commits to ensure a comprehensive change management process.
+
+## Conclusion
+
+Implementing these ideas using the Smartsheet GitHook and providing the organization with my customized Python code can revolutionize how we manage our infrastructure deployments. The integration ensures real-time updates, enhances collaboration, reduces liability, and aligns with corporate healthcare initiatives. By leveraging these tools, we streamline processes, improve accuracy, and foster a more cohesive and efficient project management environment.
+
+This approach not only supports our immediate project needs but also sets a strong foundation for future scalability and innovation. Embracing these technological advancements will undoubtedly contribute to our mission of delivering exceptional patient care through reliable and advanced IT infrastructure.
+
+Sincerely,
+
+**Author:**
+Aaron Surina  
+LV Solutions Architect III  
+Enterprise Infrastructure Architecture  
+Planning, Design & Construction | National Real Estate Services  
+CommonSpirit Health®  
+e: aaron.surina@commonspirit.org | c: 707.200.4372
+
+## Example Code Blocks
+
+### 00 Interactive Starter Script
+
+```python
+import json
+import os
+
+def get_user_input(prompt, default=None):
+    """Helper function to get user input with a default value."""
+    if default:
+        prompt = f"{prompt} [{default}]: "
+    else:
+        prompt = f"{prompt}: "
+    return input(prompt) or default
+
+def main():
+    print("Welcome to the Smartsheet-GitHub Integration Setup")
+
+    # Get user inputs
+    smart_token = get_user_input("Enter your Smartsheet API token")
+    sheet_id = get_user_input("Enter your Smartsheet sheet ID")
+    column_id = get_user_input("Enter your Smartsheet column ID")
+    github_webhook_url = get_user_input("Enter your GitHub webhook URL")
+    github_repo_url = get_user_input("Enter your GitHub repository URL")
+
+    # Save to config.json
+    config = {
+        "SMARTSHEET_API_TOKEN": smart_token,
+        "sheet_id": sheet_id,
+        "column_id": column_id,
+        "github_webhook_url": github_webhook_url,
+        "github_repo_url": github_repo_url
+    }
+
+    with open('config.json', 'w') as config_file:
+        json.dump(config, config_file, indent=4)
+    
+    print("\nConfiguration saved to config.json")
+
+    # Instructions for setting up the GitHub webhook
+    print("\nTo complete the setup, configure the GitHub webhook with the following details:")
+    print(f"Payload URL: {github_webhook_url}")
+    print("Content type: application/json")
+    print("Select events: Just the push event (and optionally the pull request event)")
+
+if __name__ == "__main__":
+    main()
+
+
+1 Automated termination Matrix Updates
+
+import smartsheet
+import os
+import json
+import requests
+from flask import Flask, request, jsonify
+
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+# Initialize the Smartsheet client with your API token
+SMARTSHEET_API_TOKEN = config['SMARTSHEET_API_TOKEN']
+smartsheet_client = smartsheet.Smartsheet(SMARTSHEET_API_TOKEN)
+
+# Function to update Smartsheet from GitHub changes
+def update_termination_matrix(changes):
+    sheet_id = config['sheet_id']
+    column_id = config['column_id']
+    for change in changes:
+        if 'termination_matrix' in change['filename']:
+            try:
+                # Extract data from the GitHub file
+                response = requests.get(change['raw_url'])
+                response.raise_for_status()  # Raise an exception for HTTP errors
+                data = response.json()
+                
+                # Update the corresponding Smartsheet
+                rows = []
+                for item in data:
+                    row = smartsheet.models.Row()
+                    row.to_top = True
+                    row.cells.append({
+                        'column_id': column_id,
+                        'value': item['termination_point']
+                    })
+                    rows.append(row)
+                
+                smartsheet_client.Sheets.add_rows(sheet_id, rows)
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching data from GitHub: {e}")
+            except smartsheet.exceptions.SmartsheetException as e:
+                print(f"Error updating Smartsheet: {e}")
+
+# Example GitHook event handler
+def handle_github_event(event):
+    try:
+        payload = json.loads(event['body'])
+        if payload['action'] in ['push', 'pull_request']:
+            changes = payload['commits'][0]['modified']
+            update_termination_matrix(changes)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON payload: {e}")
+
+# Flask app to receive GitHub webhook events
+app = Flask(__name__)
+
+@app.route('/github-webhook', methods=['POST'])
+def github_webhook():
+    event = request.get_json()
+    handle_github_event(event)
+    return '', 200
+
+if __name__ == '__main__':
+    app.run(port=5000)
+
+
+
+2 IDF Patch Panel Identification and Documentation
+
+import smartsheet
+import os
+import json
+import requests
+from flask import Flask, request, jsonify
+
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+# Initialize the Smartsheet client with your API token
+SMARTSHEET_API_TOKEN = config['SMARTSHEET_API_TOKEN']
+smartsheet_client = smartsheet.Smartsheet(SMARTSHEET_API_TOKEN)
+
+# Function to update Smartsheet from GitHub changes
+def update_idf_patch_panel(changes):
+    sheet_id = config['sheet_id']
+    column_id = config['column_id']
+    for change in changes:
+        if 'idf_patch_panel' in change['filename']:
+            try:
+                # Extract data from the GitHub file
+                response = requests.get(change['raw_url'])
+                response.raise_for_status()
+                data = response.json()
+                
+                # Update the corresponding Smartsheet
+                rows = []
+                for item in data:
+                    row = smartsheet.models.Row()
+                    row.to_top = True
+                    row.cells.append({
+                        'column_id': column_id,
+                        'value': item['port_assignment']
+                    })
+                    rows.append(row)
+                
+                smartsheet_client.Sheets.add_rows(sheet_id, rows)
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching data from GitHub: {e}")
+            except smartsheet.exceptions.SmartsheetException as e:
+                print(f"Error updating Smartsheet: {e}")
+
+# Example GitHook event handler
+def handle_github_event(event):
+    try:
+        payload = json.loads(event['body'])
+        if payload['action'] in ['push', 'pull_request']:
+            changes = payload['commits'][0]['modified']
+            update_idf_patch_panel(changes)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON payload: {e}")
+
+# Flask app to receive GitHub webhook events
+app = Flask(__name__)
+
+@app.route('/github-webhook', methods=['POST'])
+def github_webhook():
+    event = request.get_json()
+    handle_github_event(event)
+    return '', 200
+
+if __name__ == '__main__':
+    app.run(port=5000)
+
+
+
+3 Standardized Product Documentation Updates
+
+import smartsheet
+import os
+import json
+import requests
+from flask import Flask, request, jsonify
+
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+# Initialize the Smartsheet client with your API token
+SMARTSHEET_API_TOKEN = config['SMARTSHEET_API_TOKEN']
+smartsheet_client = smartsheet.Smartsheet(SMARTSHEET_API_TOKEN)
+
+# Function to update product data sheets in Smartsheet
+def update_product_data_sheets(changes):
+    sheet_id = config['sheet_id']
+    column_id = config['column_id']
+    for change in changes:
+        if 'product_data_sheets' in change['filename']:
+            try:
+                # Extract data from the GitHub file
+                response = requests.get(change['raw_url'])
+                response.raise_for_status()
+                data = response.json()
+                
+                # Update the corresponding Smartsheet
+                rows = []
+                for item in data:
+                    row = smartsheet.models.Row()
+                    row.to_top = True
+                    row.cells.append({
+                        'column_id': column_id,
+                        'value': item['product_specification']
+                    })
+                    rows.append(row)
+                
+                smartsheet_client.Sheets.add_rows(sheet_id, rows)
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching data from GitHub: {e}")
+            except smartsheet.exceptions.SmartsheetException as e:
+                print(f"Error updating Smartsheet: {e}")
+
+# Example GitHook event handler
+def handle_github_event(event):
+    try:
+        payload = json.loads(event['body'])
+        if payload['action'] in ['push', 'pull_request']:
+            changes = payload['commits'][0]['modified']
+            update_product_data_sheets(changes)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON payload: {e}")
+
+# Flask app to receive GitHub webhook events
+app = Flask(__name__)
+
+@app.route('/github-webhook', methods=['POST'])
+def github_webhook():
+    event = request.get_json()
+    handle_github_event(event)
+    return '', 200
+
+if __name__ == '__main__':
+    app.run(port=5000)
+
+
+
+4 Impact Analysis (Inventory and Asset Management Updates)
+
+import smartsheet
+import os
+import json
+import requests
+from flask import Flask, request, jsonify
+
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+# Initialize the Smartsheet client with your API token
+SMARTSHEET_API_TOKEN = config['SMARTSHEET_API_TOKEN']
+smartsheet_client = smartsheet.Smartsheet(SMARTSHEET_API_TOKEN)
+
+# Function to update inventory and asset management in Smartsheet
+def update_inventory(changes):
+    sheet_id = config['sheet_id']
+    column_id = config['column_id']
+    for change in changes:
+        if 'inventory' in change['filename']:
+            try:
+                # Extract data from the GitHub file
+                response = requests.get(change['raw_url'])
+                response.raise_for_status()
+                data = response.json()
+                
+                # Update the corresponding Smartsheet
+                rows = []
+                for item in data:
+                    row = smartsheet.models.Row()
+                    row.to_top = True
+                    row.cells.append({
+                        'column_id': column_id,
+                        'value': item['asset_details']
+                    })
+                    rows.append(row)
+                
+                smartsheet_client.Sheets.add_rows(sheet_id, rows)
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching data from GitHub: {e}")
+            except smartsheet.exceptions.SmartsheetException as e:
+                print(f"Error updating Smartsheet: {e}")
+
+# Example GitHook event handler
+def handle_github_event(event):
+    try:
+        payload = json.loads(event['body'])
+        if payload['action'] in ['push', 'pull_request']:
+            changes = payload['commits'][0]['modified']
+            update_inventory(changes)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON payload: {e}")
+
+# Flask app to receive GitHub webhook events
+app = Flask(__name__)
+
+@app.route('/github-webhook', methods=['POST'])
+def github_webhook():
+    event = request.get_json()
+    handle_github_event(event)
+    return '', 200
+
+if __name__ == '__main__':
+    app.run(port=5000)
+
+
+
+5 Project Mgmt / Task Tracking
+
+import smartsheet
+import os
+import json
+import requests
+from flask import Flask, request, jsonify
+
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+# Initialize the Smartsheet client with your API token
+SMARTSHEET_API_TOKEN = config['SMARTSHEET_API_TOKEN']
+smartsheet_client = smartsheet.Smartsheet(SMARTSHEET_API_TOKEN)
+
+# Function to update project tasks and timelines in Smartsheet
+def update_project_tasks(changes):
+    sheet_id = config['sheet_id']
+    column_id = config['column_id']
+    for change in changes:
+        if 'project_tasks' in change['filename']:
+            try:
+                # Extract data from the GitHub file
+                response = requests.get(change['raw_url'])
+                response.raise_for_status()
+                data = response.json()
+                
+                # Update the corresponding Smartsheet
+                rows = []
+                for item in data:
+                    row = smartsheet.models.Row()
+                    row.to_top = True
+                    row.cells.append({
+                        'column_id': column_id,
+                        'value': item['task_details']
+                    })
+                    rows.append(row)
+                
+                smartsheet_client.Sheets.add_rows(sheet_id, rows)
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching data from GitHub: {e}")
+            except smartsheet.exceptions.SmartsheetException as e:
+                print(f"Error updating Smartsheet: {e}")
+
+# Example GitHook event handler
+def handle_github_event(event):
+    try:
+        payload = json.loads(event['body'])
+        if payload['action'] in ['push', 'pull_request']:
+            changes = payload['commits'][0]['modified']
+            update_project_tasks(changes)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON payload: {e}")
+
+# Flask app to receive GitHub webhook events
+app = Flask(__name__)
+
+@app.route('/github-webhook', methods=['POST'])
+def github_webhook():
+    event = request.get_json()
+    handle_github_event(event)
+    return '', 200
+
+if __name__ == '__main__':
+    app.run(port=5000)
+
+
+6 Compliance and Auditing 
+
+import smartsheet
+import os
+import json
+import requests
+from flask import Flask, request, jsonify
+
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+# Initialize the Smartsheet client with your API token
+SMARTSHEET_API_TOKEN = config['SMARTSHEET_API_TOKEN']
+smartsheet_client = smartsheet.Smartsheet(SMARTSHEET_API_TOKEN)
+
+# Function to update compliance and audit documentation in Smartsheet
+def update_compliance_docs(changes):
+    sheet_id = config['sheet_id']
+    column_id = config['column_id']
+    for change in changes:
+        if 'compliance_docs' in change['filename']:
+            try:
+                # Extract data from the GitHub file
+                response = requests.get(change['raw_url'])
+                response.raise_for_status()
+                data = response.json()
+                
+                # Update the corresponding Smartsheet
+                rows = []
+                for item in data:
+                    row = smartsheet.models.Row()
+                    row.to_top = True
+                    row.cells.append({
+                        'column_id': column_id,
+                        'value': item['compliance_details']
+                    })
+                    rows.append(row)
+                
+                smartsheet_client.Sheets.add_rows(sheet_id, rows)
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching data from GitHub: {e}")
+            except smartsheet.exceptions.SmartsheetException as e:
+                print(f"Error updating Smartsheet: {e}")
+
+# Example GitHook event handler
+def handle_github_event(event):
+    try:
+        payload = json.loads(event['body'])
+        if payload['action'] in ['push', 'pull_request']:
+            changes = payload['commits'][0]['modified']
+            update_compliance_docs(changes)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON payload: {e}")
+
+# Flask app to receive GitHub webhook events
+app = Flask(__name__)
+
+@app.route('/github-webhook', methods=['POST'])
+def github_webhook():
+    event = request.get_json()
+    handle_github_event(event)
+    return '', 200
+
+if __name__ == '__main__':
+    app.run(port=5000)
+
+
+
+7 Change Mgmt and Version Control
+
+import smartsheet
+import os
+import json
+import requests
+from flask import Flask, request, jsonify
+
+# Load configuration
+with open('config.json', 'r') as config_file:
+    config = json.load(config_file)
+
+# Initialize the Smartsheet client with your API token
+SMARTSHEET_API_TOKEN = config['SMARTSHEET_API_TOKEN']
+smartsheet_client = smartsheet.Smartsheet(SMARTSHEET_API_TOKEN)
+
+# Function to update change management and version control in Smartsheet
+def update_change_management(changes):
+    sheet_id = config['sheet_id']
+    column_id = config['column_id']
+    for change in changes:
+        if 'change_management' in change['filename']:
+            try:
+                # Extract data from the GitHub file
+                response = requests.get(change['raw_url'])
+                response.raise_for_status()
+                data = response.json()
+                
+                # Update the corresponding Smartsheet
+                rows = []
+                for item in data:
+                    row = smartsheet.models.Row()
+                    row.to_top = True
+                    row.cells.append({
+                        'column_id': column_id,
+                        'value': item['change_details']
+                    })
+                    rows.append(row)
+                
+                smartsheet_client.Sheets.add_rows(sheet_id, rows)
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching data from GitHub: {e}")
+            except smartsheet.exceptions.SmartsheetException as e:
+                print(f"Error updating Smartsheet: {e}")
+
+# Example GitHook event handler
+def handle_github_event(event):
+    try:
+        payload = json.loads(event['body'])
+        if payload['action'] in ['push', 'pull_request']:
+            changes = payload['commits'][0]['modified']
+            update_change_management(changes)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON payload: {e}")
+
+# Flask app to receive GitHub webhook events
+app = Flask(__name__)
+
+@app.route('/github-webhook', methods=['POST'])
+def github_webhook():
+    event = request.get_json()
+    handle_github_event(event)
+    return '', 200
+
+if __name__ == '__main__':
+    app.run(port=5000)
+
+
+About Code:
+These customized code blocks incorporate error handling and detailed comments to ensure they are robust and suitable for auditing. 
+By integrating these scripts, you can automate updates and synchronization between GitHub and Smartsheet, 
+enhancing efficiency and collaboration in managing infrastructure deployments.
+(Copyright 2024 Aaron Surina @ CommonSpirit Health - All Rights Reserved)
+
+
